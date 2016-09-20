@@ -7,6 +7,16 @@
 #include "TxRange.h"    // #NotToMerge
 
 namespace ROOTX{
+
+  TAxis AxisFix(const char* name, const char * title, 
+      Int_t nbin, Double_t xmin, Double_t xmax);
+  TAxis AxisLog(const char* name, const char * title, 
+      Int_t nbin, Double_t xmin, Double_t xmax, Double_t xbegin=0);
+  TAxis AxisStr(const char* name, const char * title, 
+      TString1D bin );
+  TAxis AxisVar(const char* name, const char * title, 
+      Double1D bins );
+
   class TxHnSparseHelperBase {
   public:
     ~TxHnSparseHelperBase(){}
@@ -37,16 +47,13 @@ namespace ROOTX{
 
     Long64_t Fill( Double2D values, Double_t weight );
 
+    void PrintAxis(int i,Option_t* opt);
     void PrintAxis(Option_t* opt);
-    void PrintUserAxis(option_t* opt);
+    void PrintUserAxis(int i, option_t* opt){ printAxis(i,TString(opt)+"user");}
+    void PrintUserAxis(option_t* opt){ printAxis(TString(opt)+"user");}
+    void PrintUAxis(int i,option_t* opt){ PrintUserAxis(i,opt); }
     void PrintUAxis(option_t* opt){ PrintUserAxis(opt); }
 
-    static TAxis AxisFix(const char* name, const char * title, 
-        Int_t nbin, Double_t xmin, Double_t xmax);
-    static TAxis AxisLog(const char* name, const char * title, 
-        Int_t nbin, Double_t xmin, Double_t xmax, Double_t xbegin=0);
-    static TAxis AxisVar(const char* name, const char * title, 
-        Double1D bins );
   private:
     TxHnSparseHelperBase(){};
     Double2D    fUserBin;
@@ -64,9 +71,7 @@ namespace ROOTX{
     THnSparse * Data() { return fH; }
 
     static TxHnSparseHelper Create(const char* name, const char* title, 
-        Double2D bins, Int_t chunksize = 1024 * 16);
-    static TxHnSparseHelper Create(const char* name, const char* title, 
-        TAxis1D bins,  Int_t chunksize = 1024 * 16);
+        TAxis1D bins, Option_t*opt="", Int_t chunksize = 1024 * 16);
     static TxHnSparseHelper* Load(TString name, TObject * clist);
     ClassDef( ROOTX::TxHnSparseHelper, 1);
   };
