@@ -206,15 +206,14 @@ namespace ROOTX {
     //TODO
   }
 
-
   //____________________________________________________
-  TxHnSparseHelper::TxHnSparseHelper ( TObject   *o ){
+  TxHnSparseHelper& TxHnSparseHelper::operator=(THnSparse* o){
     if(!o) ROOTX_ERROR(-1,1,"No Object");
     fH = dynamic_cast<THnSparse*>(o);
     if(!fH) ROOTX_ERROR(-1,1,o->GetName()+" is not THnSparse but "+o->ClassName());
     ResetUserAxisAll();
+    return *this;
   }
-
   //____________________________________________________
   THnSparse*  TxHnSparseHelper::Create(const char* name, const char* title, 
       TAxis1D bins, Option_t* opt,  Int_t chunksize){

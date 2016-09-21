@@ -113,6 +113,7 @@ namespace ROOTX {
 #ifndef ROOTX_TXRANGE_H
 #define ROOTX_TXRANGE_H
 
+#include <TAxis.h>
 #include "TxBaseUtil.h" // #NotToMerge
 #include "TxDEBUG.h"    // #NotToMerge
 
@@ -154,6 +155,7 @@ namespace ROOTX {
   TxRangeI bin_range( int end ){ return bin_range( 1, end ); }
   template<class T>
     TxRangeI bin_range( const std::vector<T> &t, int begin=1, int end=kIntMin ){ return bin_range( begin, (end<0?std::min(int(t.size()-1),abs(end)):end));  }
+  TxRangeI bin_range( TAxis ax, int begin=1, int end=kIntMax){ return bin_range(begin,end).lt(ax->GetNbins());}
 }
 #endif
 #ifndef ROOTX_TxHelper_H
@@ -243,8 +245,7 @@ namespace ROOTX{
     TxHnSparseHelper ( THnSparse *h ):
       TxHnSparseHelperBase(h)
     { ResetUserAxisAll(); }
-    TxHnSparseHelper ( TObject   *o );
-
+    TxHnSparseHelper& operator=(THnSparse *o);
     THnSparse * operator->(){ return fH; }
     THnSparse * Data() { return fH; }
 
@@ -517,15 +518,14 @@ namespace ROOTX {
     //TODO
   }
 
-
   //____________________________________________________
-  TxHnSparseHelper::TxHnSparseHelper ( TObject   *o ){
+  TxHnSparseHelper& TxHnSparseHelper::operator=(THnSparse* o){
     if(!o) ROOTX_ERROR(-1,1,"No Object");
     fH = dynamic_cast<THnSparse*>(o);
     if(!fH) ROOTX_ERROR(-1,1,o->GetName()+" is not THnSparse but "+o->ClassName());
     ResetUserAxisAll();
+    return *this;
   }
-
   //____________________________________________________
   THnSparse*  TxHnSparseHelper::Create(const char* name, const char* title, 
       TAxis1D bins, Option_t* opt,  Int_t chunksize){

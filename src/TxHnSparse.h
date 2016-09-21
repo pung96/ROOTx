@@ -74,8 +74,7 @@ namespace ROOTX{
     TxHnSparseHelper ( THnSparse *h ):
       TxHnSparseHelperBase(h)
     { ResetUserAxisAll(); }
-    TxHnSparseHelper ( TObject   *o );
-
+    TxHnSparseHelper& operator=(THnSparse *o);
     THnSparse * operator->(){ return fH; }
     THnSparse * Data() { return fH; }
 

@@ -1,6 +1,7 @@
 #ifndef ROOTX_TXRANGE_H
 #define ROOTX_TXRANGE_H
 
+#include <TAxis.h>
 #include "TxBaseUtil.h" // #NotToMerge
 #include "TxDEBUG.h"    // #NotToMerge
 
@@ -42,5 +43,6 @@ namespace ROOTX {
   TxRangeI bin_range( int end ){ return bin_range( 1, end ); }
   template<class T>
     TxRangeI bin_range( const std::vector<T> &t, int begin=1, int end=kIntMin ){ return bin_range( begin, (end<0?std::min(int(t.size()-1),abs(end)):end));  }
+  TxRangeI bin_range( TAxis ax, int begin=1, int end=kIntMax){ return bin_range(begin,end).lt(ax->GetNbins());}
 }
 #endif
