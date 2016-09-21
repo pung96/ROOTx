@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <TAxis.h>
+class TString;
 
 namespace ROOTX {
 
@@ -14,9 +15,14 @@ namespace ROOTX {
   typedef std::vector<Int1D>    Int2D;
   typedef std::vector<Double_t> Double1D;
   typedef std::vector<Double1D> Double2D;
+  typedef std::vector<TString>  String1D;
+  typedef std::vector<String1D> String2D;
   typedef std::vector<TAxis>    TAxis1D;
 
-  const int min_int = std::numeric_limits<int>::min()+1;
+  const int kIntMin = std::numeric_limits<int>::min()+1;
+  const int kIntMax = std::numeric_limits<int>::max()-1;
+
+  TString operator+(const TString &s, int n){ return Form("%s%d",s.Data(),n);}
 }
 
 

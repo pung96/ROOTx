@@ -1,3 +1,8 @@
+#include "TxHnSparse.h" // #NotToMerge
+#include <TPRegexp.h>
+#include <TDirectory.h>
+#include <TH1D.h>
+
 namespace ROOTX {
 
   //____________________________________________________
@@ -9,7 +14,7 @@ namespace ROOTX {
 
   //____________________________________________________
   TAxis AxisStr(const char* name, const char * title, 
-      TString1D bin ){
+      String1D bin ){
     TAxis ax = AxisFix(name,title,bin.size(),0.5,bin.size()+0.5);
     for( auto i : bin_range(bin) )
       ax.SetBinLabel( i, bin[i] );
@@ -26,10 +31,10 @@ namespace ROOTX {
   //____________________________________________________
   TAxis AxisLog(const char* name, const char * title, 
       Int_t nbin, Double_t xmin, Double_t xmax, Double_t xbegin){
-    int binoffset = ( xbegin<0 || (xmin-xmin0)<1e-9) ? 0 : 1;
+    int binoffset = ( xbegin<0 || (xmin-xbegin)<1e-9) ? 0 : 1;
     Double1D bin(nbin+1+binoffset,0);
     double logBW3 = (log(xmax)-log(xmin))/nbin;
-    for(auto i : range(bin)+1)  bin[ij+binoffset]=xmin*exp(ij*logBW3);
+    for(auto i : range(bin)+1)  bin[i+binoffset]=xmin*exp(i*logBW3);
     TAxis ax( nbin, &bin.front() ) ;
     ax.SetNameTitle(name,title);
     return ax;
@@ -46,6 +51,15 @@ namespace ROOTX {
   }
 
   //____________________________________________________
+  TAxis* TxHnSparseHelperBase::GetAxisSafe(int iaxis){
+    if( iaxis<0 || iaxis>fH->GetNdimensions() )  
+      ROOTX_ERROR(-1,1,"Exeed of Axis "+iaxis+fH->GetName());
+    auto ax = fH->GetAxis(iaxis);
+    if( !ax ) ROOTX_ERROR(-1,1,"Unknown error by THnSparse "+fH->GetName());
+    return ax;
+  }
+
+  //____________________________________________________
   void  TxHnSparseHelperBase::ResetUserAxis(Int_t iaxis){
     auto ax = GetAxisSafe(iaxis);
     fUserAxisMap[iaxis] = {0};
@@ -58,23 +72,23 @@ namespace ROOTX {
 
   //____________________________________________________
   void  TxHnSparseHelperBase::ResetUserAxisAll(){
-    fUserAxis.resize(fH->GetNdimension());
-    fUserAxisMap.resize(fH->GetNdimension());
-    for( auto i : range(fH->GetNdimension()) )
+    fUserAxis.resize(fH->GetNdimensions());
+    fUserAxisMap.resize(fH->GetNdimensions());
+    for( auto i : range(fH->GetNdimensions()) )
       ResetUserAxis(i);
   }
 
   //____________________________________________________
   const Double1D & TxHnSparseHelperBase::SetUserAxis( int iaxis, Double1D bin ){
     auto ax = GetAxisSafe(iaxis);
-    if( bins.size()==0 ) ResetUserAxis(i);
+    if( bin.size()==0 ) ResetUserAxis(iaxis);
     else{
       fUserAxis[iaxis] = bin;
       fUserAxisMap[iaxis] = { 0 };
       for( auto i : range(bin) ){
         int ob = ax->FindBin( bin[i] );
         //TODO if( ib>0 && bin <= fCBinsB[i][ib-1] ) ErrorExit("Wrong bin");
-        fUserAxisMap[iaxis].push_back( ax->FindBin( bins[ob] ) );
+        fUserAxisMap[iaxis].push_back( ax->FindBin( bin[ob] ) );
       }
     }
     return fUserAxis[iaxis];
@@ -87,7 +101,7 @@ namespace ROOTX {
   }
 
   //____________________________________________________
-  TH1* TxHnSparseHelperBase::GetTH1(TString name, int iaxis, Double2D bin,Option_t* opt){
+  TH1* TxHnSparseHelperBase::GetTH1(TString name, int iaxis, Int2D bin,Option_t* opt){
     //== Histogram Name and Title
     if( name.EndsWith("-") ) name+=Form("%sP%02d",fH->GetName(),iaxis);
     TString title = fH->GetTitle();
@@ -113,14 +127,14 @@ namespace ROOTX {
       }
       ax->SetRange(nb[0], nb[1]);
     }
-    auto h = fH->Projection( iaxis, opt );
+    TH1 * h = dynamic_cast<TH1*>(fH->Projection( iaxis, opt ));
     h->SetNameTitle(name,title);
     return h;
   }
 
   //____________________________________________________
-  TH1* TxHnSparseHelperBase::GetTH1(TString name, int iaxis, Double1D bin,Option_t* opt){
-    Double2D bins;
+  TH1* TxHnSparseHelperBase::GetTH1(TString name, int iaxis, Int1D bin,Option_t* opt){
+    Int2D bins;
     for( int it : bin ) bins.push_back( {it,it} );
     return GetTH1(name, iaxis, bins, opt);
   }
@@ -134,40 +148,61 @@ namespace ROOTX {
 
 
   //____________________________________________________
-  void TxHnSparseHelperBase::PrintAxis( int i, Option_t* opt){
+  TString TxHnSparseHelperBase::PrintAxis( int i, Option_t* opt){
     using std::min;
     TString opts = opt;
+    TString output;
     auto uax= fUserAxis.at(i);
     auto ax = GetAxisSafe(i);
-    Printf("%2d: %10s",i, ax->GetName());
-    if( opts.Contains("all") ){
+    output+=Form("%2d: %10s",i, ax->GetName());
+    if( opts.Contains("all",TString::kIgnoreCase) ){
       int nBinPrint = 10;
-      if( opts.Contains("ALL",kExact) ) nBinPrint=1000;
-      else if( opts.Contains("All",kExact) ) nBinPrint=100;
+      if( opts.Contains("ALL") ) nBinPrint=1000;
+      else if( opts.Contains("All") ) nBinPrint=100;
       if( !opts.Contains("user") || int(uax.size())==ax->GetNbins()+2 ){
         //==== Print Orignal Axis
-        Printf(" (nbin/min/max) = %4d %6.2f %8.2f ::"
+        output+=Form(" (nbin/min/max) = %4d %6.2f %8.2f ::"
             ,ax->GetNbins(),ax->GetXmin(), ax->GetXmax());
         for( auto j : bin_range( min(ax->GetNbins(),10) ))
-          Printf(" %s", FormSelectAndTrim(ax->GetBinLabel(), ax->GetBinLowEdge(j)).Data() );
+          Printf(" %s", FormSelectAndTrim(ax->GetBinLabel(j), ax->GetBinLowEdge(j)).Data() );
       }else{
         //==== Print User Axis
-        Printf(" (nbin/min/max) = %4d %6.2f %8.2f ::"
-            ,uax.size(), uax.front(), uax.back());
-        for( auto j : bin_range( min(ax->GetNbins(),10) ))
-          Printf(" %s", FormSelectAndTrim("", uax.at(j)));
+        output+=Form(" (nbin/min/max) = %4d %6.2f %8.2f ::"
+            ,int(uax.size()), uax.front(), uax.back());
+        for( auto j : bin_range(ax->GetNbins()).lt(10) )
+          output+=Form(" %s", FormSelectAndTrim("", uax.at(j)).Data());
       }
-      std::cout<<std::endl;
     }
+    if(opts.Contains("string",TString::kIgnoreCase))
+      return output;
+    else
+      std::cout<<output<<std::endl;
+    return "";
   }
   //____________________________________________________
-  void TxHnSparseHelperBase::PrintAxis(Option_t* opt){
-    for( auto i : RangeDim() ) PrintAxis( i, opt );
+  TString TxHnSparseHelperBase::PrintAxis(Option_t* opt){
+    TString output;
+    for( auto i : DimRange() ) output+=PrintAxis( i, opt )+"\n";
+    return output;
+  }
+
+  //____________________________________________________
+  Double1D TxHnSparseHelperBase::Flat( Double2D values){
+    Double1D v;
+    for( auto i : values )
+      for( auto j : i )
+        v.push_back(j);
+    return v;
   }
 
   //____________________________________________________
   Long64_t TxHnSparseHelperBase::Fill( Double2D values, Double_t weight ){
-    return fH->Fill( &x.front(), w );
+    return fH->Fill( &Flat(values).front(), weight );
+    //TODO
+  }
+  //____________________________________________________
+  Long64_t TxHnSparseHelperBase::Fill( Double1D values, Double_t weight ){
+    return fH->Fill( &values.front(), weight );
     //TODO
   }
 
@@ -181,21 +216,30 @@ namespace ROOTX {
   }
 
   //____________________________________________________
-  TxHnSparseHelper  TxHnSparseHelper::Create(const char* name, const char* title, 
+  THnSparse*  TxHnSparseHelper::Create(const char* name, const char* title, 
       TAxis1D bins, Option_t* opt,  Int_t chunksize){
-    const TAxis * axises[bins.size()];
-    for( auto i : range(bins) ) axises[i]= &bins[i];
-    //TODO
-    THnSparse * h= fHistos->CreateTHnSparse(name, title, ndim, axises,opt );
+    Int1D nbin;
+    Double1D xmin,xmax;
+    for( auto ax : bins ) {
+      nbin.push_back( ax.GetNbins() );
+      xmin.push_back( ax.GetXmin()  );
+      xmin.push_back( ax.GetXmax() );
+    }
+    auto h = new THnSparseD(name,title,nbin.size(),&nbin.front(),&xmin.front(),&xmax.front(),chunksize);
+    for(auto i : range(nbin))
+      *(h->GetAxis(i)) = bins[i];
+    TString opts = opt;
+    if( opts.Contains("s") ) h->Sumw2();
     return h;
+
   }
 
   //____________________________________________________
-  TxHnSparseHelper* TxHnSparseHelper::Load(TString name, TObject * clist){
+  THnSparse* TxHnSparseHelper::Load(TString name, TObject * clist){
     if( !clist ) clist = gDirectory;
     auto o = clist->FindObject(name);
     if(!o ) ROOTX_ERROR(-1,1,"No THnSparse "+name );
-    return TxHnSparseHelper(o);
+    return dynamic_cast<THnSparse*>(o);
   }
 
   //____________________________________________________
@@ -203,5 +247,7 @@ namespace ROOTX {
 
 
 
+#ifdef ROOTX_DEV
   ClassImp( ROOTX:TxHnSparseT );
+#endif
 }

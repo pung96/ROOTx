@@ -19,6 +19,11 @@ namespace ROOTX {
     TxRangeI(int begin, int end){ SetRange(begin,end); }
     iterator begin(){ return iterator(fBegin); }
     iterator end()  { return iterator(fEnd+1);   }
+    TxRangeI& operator+(int n){fEnd+=n;return *this;}
+    TxRangeI& less_than(int n){SetRange(fBegin,std::min(fEnd+1,n)-1);return *this;}//
+    TxRangeI& greater_than(int n){SetRange(std::max(fBegin-1,n)+1,fEnd);return *this;}//
+    TxRangeI& lt(int n){return less_than(n);}     // Alias of less_than
+    TxRangeI& gt(int n){return greater_than(n);}     // Alias of less_than
   private:
     void SetRange( int begin, int end ){if( begin>end ) ROOTX_ERROR(-1,1,"being>end"); fBegin=begin;fEnd=end;}
     int fBegin;
@@ -36,6 +41,6 @@ namespace ROOTX {
   }
   TxRangeI bin_range( int end ){ return bin_range( 1, end ); }
   template<class T>
-    TxRangeI bin_range( const std::vector<T> &t, int begin=1, int end=min_int ){ return bin_range( begin, (end<0?std::min(int(t.size()-1),abs(end)):end));  }
+    TxRangeI bin_range( const std::vector<T> &t, int begin=1, int end=kIntMin ){ return bin_range( begin, (end<0?std::min(int(t.size()-1),abs(end)):end));  }
 }
 #endif

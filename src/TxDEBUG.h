@@ -1,8 +1,9 @@
 #ifndef ROOTX_TXDEBUG_H
 #define ROOTX_TXDEBUG_H
 
-#include <stdarg.h>
+#include <iostream>
 #include <TString.h>
+#include <TSystem.h>
 #include "TxBaseUtil.h"
 
 
