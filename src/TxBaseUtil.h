@@ -3,6 +3,7 @@
 
 #define ROOTX_DEBUG_LEVEL 1
 
+#include <string>
 #include <stdarg.h>
 #include <vector>
 #include <algorithm>
@@ -11,13 +12,15 @@ class TString;
 
 namespace ROOTX {
 
-  typedef std::vector<Int_t>    Int1D;
-  typedef std::vector<Int1D>    Int2D;
-  typedef std::vector<Double_t> Double1D;
-  typedef std::vector<Double1D> Double2D;
-  typedef std::vector<TString>  String1D;
-  typedef std::vector<String1D> String2D;
-  typedef std::vector<TAxis>    TAxis1D;
+  typedef std::vector<Int_t>     Int1D;
+  typedef std::vector<Int1D>     Int2D;
+  typedef std::vector<Double_t>  Double1D;
+  typedef std::vector<Double1D>  Double2D;
+  typedef std::vector<TString>   TString1D;
+  typedef std::vector<TString1D> TString2D;
+  typedef std::vector<std::string>   String1D;
+  typedef std::vector<String1D>  String2D;
+  typedef std::vector<TAxis>     TAxis1D;
 
   const int kIntMin = std::numeric_limits<int>::min()+1;
   const int kIntMax = std::numeric_limits<int>::max()-1;

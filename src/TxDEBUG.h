@@ -28,17 +28,10 @@ namespace ROOTX {
   class TxDebug : public TxDebugBase {
   public:
     enum { kDEBUG, kERROR, kWARN };
-    TxDebug():
-      fError(0), fMsg(0), fType(0){}
+    TxDebug(){}
     TxDebug( Int_t error, const char * msg, int type):
       fError(error), fMsg(msg), fType(type){}
-    void Run(){
-      std::cout<<Form("%s:%d: %s"
-          ,fTypeString[fType].Data()
-          ,fError
-          ,fMsg.Data())
-        <<std::endl;
-    }
+    void Run(){ Run( fType, fLevel, fError, fMsg ); }
     void Run( int type, int level, int error, TString msg, bool istrue=true){
       if( !istrue ) return;
       std::cout<<Form("%s:%d: %s"
@@ -48,16 +41,15 @@ namespace ROOTX {
         <<std::endl;
       if( level < 0 ) gSystem->Exit(error);
     }
-    //TxDebug * operator()( int level, int error ){fLevel=level;fError=error;}
     static TxDebug* Instance(){
       static TxDebug * debug = new TxDebug;
       return debug;
     }
   private:
-    Int_t   fError;
-    TString fMsg;
-    int     fType;
-    int     fLevel;
+    Int_t   fError = 0;
+    TString fMsg   = "";
+    int     fType  = 0;
+    int     fLevel = 0;
     static vector<TString> fTypeString;
   };
 
